@@ -1,0 +1,185 @@
+﻿<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Wyznacznik Macierzy</title>
+		<style>
+		input.macierz{
+			text-align:center;
+			width: 40px;
+			height: 50px;
+		}
+		input[type="submit"]{
+			text-align:center;
+			width: 80px;
+			height: 30px;
+		}
+		#macierz{
+			text-align:center;
+			margin-top: 10px;
+		}
+		</style>
+		<script>
+		function myFunction() {
+			var x = document.getElementById("macierze").value;
+			document.getElementById("wypisz").innerHTML = x + "x" + x;
+		}
+		
+		</script>
+		<?php 
+		require_once('bootstrap.php');
+		?>
+	</head>
+	<body>
+		<div id="macierz">
+		<?php
+		function Wymiar1($macierz){
+			return $macierz[1][1];
+		}
+		
+		function Wymiar2($macierz){
+			return ($macierz[1][1]*$macierz[2][2])-($macierz[1][2]*$macierz[2][1]);
+		}
+		
+		function Wymiar3($macierz){
+			$x=$macierz[1][1]*$macierz[2][2]*$macierz[3][3] +
+				$macierz[1][2]*$macierz[2][3]*$macierz[3][1] +
+                $macierz[1][3]*$macierz[2][1]*$macierz[3][2] -
+                $macierz[1][1]*$macierz[2][3]*$macierz[3][2] -
+                $macierz[1][2]*$macierz[2][1]*$macierz[3][3] -
+                $macierz[1][3]*$macierz[2][2]*$macierz[3][1];
+			return $x;
+		}
+		
+		//sprawdza po wierszach wymiar (zawsze kwadratowa macierz)
+		function SprWymiar($macierz){
+			$wymiar=1;
+			while(isset($macierz[$wymiar][1])){
+				$wymiar++;
+			}
+			return $wymiar-1; 
+		}
+		
+		function WyswietlMacierz($macierz){
+			$wymiar=SprWymiar($macierz);
+			$wyswietl="";
+			for($wiersz=1;$wiersz<=$wymiar;$wiersz++)
+			{  
+				$wyswietl = $wyswietl."<form style='margin-bottom: 0px;'>";
+				for($kolumna=1;$kolumna<=$wymiar;$kolumna++)
+				{
+					$wyswietl = $wyswietl."<input class='macierz' type='number' value='".$macierz[$wiersz][$kolumna]."' width='5px' disabled>";
+				}
+				$wyswietl = $wyswietl."</form>";
+			}
+			return $wyswietl; 
+		}
+		
+		//wykresla dana kolumne z macierzy
+		function NowaMacierz($macierz, $kol){
+			$macierzNowa[][]=array();
+			$wymiar=SprWymiar($macierz);
+			$wiersz2=1;
+			for($wiersz=2;$wiersz<=$wymiar;$wiersz++)
+			{  
+				$dodaj=0;
+				for($kolumna=1;$kolumna<=$wymiar-1;$kolumna++)
+				{
+					if($kol==$kolumna){
+						$dodaj=1;
+					}
+					$macierzNowa[$wiersz2][$kolumna]= $macierz[$wiersz][$kolumna+$dodaj];	
+					
+				}
+				$wiersz2++;
+				}
+			return $macierzNowa;
+		}
+
+		
+		function metodaLaplace($macierz)
+			{
+			$wyznacznik=0;
+			$stopien=SprWymiar($macierz);
+			if( $stopien > 3 ){
+				for ($kolumna = 1; $kolumna <= $stopien; $kolumna++ )
+				{
+					$nowaMacierz= NowaMacierz($macierz, $kolumna);
+					$wyznacznik = $wyznacznik + pow(-1,1+$kolumna) * $macierz[1][$kolumna] * metodaLaplace($nowaMacierz);				
+				}
+			}
+			if($stopien==3){
+				$wyznacznik = Wymiar3($macierz);
+			}
+			return $wyznacznik;
+		}
+	
+		if(!isset($_POST['wymiar'])){
+			//------------------------------------Podawanie wymiaru-----------------------------------------
+		?>
+			<form method="post">
+				Podaj wymiar macierzy:<br>
+				<input type="number" id="macierze" name="wymiar" min="1" max="11" value="1" onload="myFunction()" onclick="myFunction()"> <span id="wypisz">1x1</span><br>
+				<input type="submit" value="Zapisz"><br>
+			</form> 
+		<?php
+		}else{
+			if(!isset($_POST['1'])){
+				//------------------------------------Wpisywanie wartości do macierzy----------------------
+		?>
+				<div class="alert alert-info">Wypełnij macierz</div>
+				<form method="post">
+				<?php
+				for($i=1;$i<=$_POST['wymiar']*$_POST['wymiar'];$i++){
+					
+					echo "<input class='macierz' type='number' value='0' name='".$i."' width='5px'>";
+					if($i%$_POST['wymiar']==0){
+						echo "</br>";
+					}
+				}
+				?>
+				<br>
+				<input type="hidden" name="wymiar" value="<?php echo $_POST['wymiar'];?>">
+				<input type="submit" value="Zapisz"><br>
+				</form>
+		<?php
+			}else{
+				
+				echo '<div class="alert alert-warning">'."Wymiar macierzy: ".$_POST["wymiar"]."x".$_POST["wymiar"]."</br>".'</div> </br>';
+				$macierz[][]=array();
+				
+				$i=1;
+				for($wiersz=1;$wiersz<=$_POST["wymiar"];$wiersz++)
+				{  
+					for($kolumna=1;$kolumna<=$_POST["wymiar"];$kolumna++)
+					{
+						$macierz[$wiersz][$kolumna]= $_POST[$i];
+						$i++;
+					}
+				}
+				
+				echo '<div class="alert alert-info">'."Macierz: </br>";
+				//------------------------------------Wyświetlanie macierzy-----------------------------------------
+				echo WyswietlMacierz($macierz).'</div>';
+				
+				echo "</br>";
+				//------------------------------------Liczenie wyznaczników-----------------------------------------
+				if($_POST["wymiar"]==1){ //1 wymiarowa
+					echo '<div class="alert alert-success">'."Wyznacznik wynosi: ".Wymiar1($macierz).'</div>';
+				}else if($_POST["wymiar"]==2){ //2 wymiarowa
+					echo '<div class="alert alert-success">'."Wyznacznik wynosi: ".Wymiar2($macierz).'</div>';
+				}else if($_POST["wymiar"]==3){ //3 wymiarowa
+					echo '<div class="alert alert-success">'."Wyznacznik wynosi: ".Wymiar3($macierz).'</div>';
+				}else{ //4 wymiarowa i wiecej
+					$wym1=SprWymiar($macierz);
+					echo '<div class="alert alert-success">'."Wyznacznik wynosi: ". metodaLaplace($macierz, $wym1).'</div>';
+				}					
+				
+			
+		}
+		}
+
+		?>
+		</div>
+	</body>
+</html>
